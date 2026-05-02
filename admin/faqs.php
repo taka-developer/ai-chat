@@ -46,6 +46,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $flash = 'success:FAQを削除しました。';
     }
 
+    if ($action === 'edit') {
+        $id       = (int)($_POST['id'] ?? 0);
+        $category = trim($_POST['category'] ?? '');
+        $question = trim($_POST['question'] ?? '');
+        $answer   = trim($_POST['answer'] ?? '');
+        $keywords = trim($_POST['keywords'] ?? '');
+        $priority = (int)($_POST['priority'] ?? 0);
+        if ($id && $question && $answer) {
+            if ($keywords === '') {
+                try {
+                    $kw = (new Claude())->generateFaqKeywords($question, $answer);
+                    $keywords = implode(',', $kw);
+                } catch (Throwable) {}
+            }
+            $pdo->prepare(
+                'UPDATE faqs SET category=?, question=?, answer=?, keywords=?, priority=?, updated_at=NOW() WHERE id=?'
+            )->execute([$category, $question, $answer, $keywords, $priority, $id]);
+            $flash = 'success:FAQを更新しました。';
+        }
+    }
+
     if ($action === 'csv_import') {
         $clientId    = (int)($_POST['client_id'] ?? 0);
         $autoKeywords = !empty($_POST['auto_keywords']);
@@ -166,7 +187,8 @@ ob_start();
           </form>
         </td>
         <td><?= (int)$f['priority'] ?></td>
-        <td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="toggleEdit(<?= (int)$f['id'] ?>)">編集</button>
           <form method="post" onsubmit="return confirm('削除しますか？')" style="display:inline">
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="id" value="<?= (int)$f['id'] ?>">
@@ -174,9 +196,49 @@ ob_start();
           </form>
         </td>
       </tr>
+      <tr id="edit-row-<?= (int)$f['id'] ?>" style="display:none">
+        <td colspan="6" style="padding:0">
+          <div style="background:#f8fafc;border-top:2px solid #2563eb;padding:16px">
+            <form method="post">
+              <input type="hidden" name="action" value="edit">
+              <input type="hidden" name="id" value="<?= (int)$f['id'] ?>">
+              <div style="display:grid;grid-template-columns:1fr 120px;gap:12px">
+                <div class="form-group" style="margin-bottom:0">
+                  <label>カテゴリ</label>
+                  <input type="text" name="category" value="<?= htmlspecialchars($f['category'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+                </div>
+                <div class="form-group" style="margin-bottom:0">
+                  <label>優先度</label>
+                  <input type="number" name="priority" value="<?= (int)$f['priority'] ?>" min="0">
+                </div>
+              </div>
+              <div class="form-group" style="margin-top:12px">
+                <label>質問 *</label>
+                <textarea name="question" rows="2" required><?= htmlspecialchars($f['question'], ENT_QUOTES, 'UTF-8') ?></textarea>
+              </div>
+              <div class="form-group">
+                <label>回答 *</label>
+                <textarea name="answer" rows="3" required><?= htmlspecialchars($f['answer'], ENT_QUOTES, 'UTF-8') ?></textarea>
+              </div>
+              <div class="form-group">
+                <label>キーワード（空欄なら自動生成）</label>
+                <input type="text" name="keywords" value="<?= htmlspecialchars($f['keywords'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
+              </div>
+              <button class="btn btn-primary btn-sm" type="submit">更新</button>
+              <button type="button" class="btn btn-sm" onclick="toggleEdit(<?= (int)$f['id'] ?>)" style="background:#94a3b8;color:#fff;margin-left:8px">キャンセル</button>
+            </form>
+          </div>
+        </td>
+      </tr>
     <?php endforeach; ?>
     </tbody>
   </table>
 </div>
+<script>
+function toggleEdit(id) {
+  const row = document.getElementById('edit-row-' + id);
+  row.style.display = row.style.display === 'none' ? '' : 'none';
+}
+</script>
 <?php
 adminLayout('FAQ管理（管理者）', ob_get_clean(), 'admin');

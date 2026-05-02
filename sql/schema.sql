@@ -35,8 +35,15 @@ CREATE TABLE admin_users (
   email VARCHAR(200) UNIQUE NOT NULL,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('admin', 'editor') DEFAULT 'editor',
+  login_failed_count INT DEFAULT 0,
+  login_locked_until DATETIME DEFAULT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- [migration] 既存DBへの適用（初回セットアップ済みの場合）:
+-- ALTER TABLE admin_users
+--   ADD COLUMN login_failed_count INT DEFAULT 0,
+--   ADD COLUMN login_locked_until DATETIME DEFAULT NULL;
 
 -- 会話ログテーブル
 CREATE TABLE conversation_logs (

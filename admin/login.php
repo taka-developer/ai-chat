@@ -8,6 +8,9 @@ if (!empty($_SESSION['user_id'])) {
 }
 
 $error = '';
+if (!empty($_GET['timeout'])) {
+    $error = 'セッションの有効期限が切れました。再度ログインしてください。';
+}
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -15,7 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         header('Location: ' . ($_SESSION['role'] === 'admin' ? '/ai-chat/admin/index.php' : '/ai-chat/admin/editor/index.php'));
         exit;
     }
-    $error = 'メールアドレスまたはパスワードが正しくありません。';
+    $error = Auth::loginError() === 'locked'
+        ? 'ログインに5回失敗しました。30分後に再試行してください。'
+        : 'メールアドレスまたはパスワードが正しくありません。';
 }
 ?>
 <!DOCTYPE html>

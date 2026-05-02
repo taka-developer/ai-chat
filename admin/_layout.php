@@ -1,11 +1,14 @@
 <?php
 function adminLayout(string $title, string $body, string $role = 'admin'): void
 {
+    $email       = htmlspecialchars($_SESSION['user_email'] ?? '', ENT_QUOTES, 'UTF-8');
+    $currentRole = htmlspecialchars($_SESSION['role'] ?? '', ENT_QUOTES, 'UTF-8');
     $navAdmin = '
       <a href="/ai-chat/admin/index.php">ダッシュボード</a>
       <a href="/ai-chat/admin/clients.php">クライアント</a>
       <a href="/ai-chat/admin/faqs.php">FAQ</a>
-      <a href="/ai-chat/admin/logs.php">ログ</a>';
+      <a href="/ai-chat/admin/logs.php">ログ</a>
+      <a href="/ai-chat/admin/users.php">ユーザー</a>';
     $navEditor = '
       <a href="/ai-chat/admin/editor/index.php">ダッシュボード</a>
       <a href="/ai-chat/admin/editor/faqs.php">FAQ管理</a>
@@ -25,8 +28,10 @@ function adminLayout(string $title, string $body, string $role = 'admin'): void
     header .brand { font-weight: 700; font-size: 16px; }
     header nav a { color: #cbd5e1; text-decoration: none; font-size: 14px; padding: 0 8px; }
     header nav a:hover { color: #fff; }
-    header .logout { margin-left: auto; }
-    header .logout a { color: #94a3b8; font-size: 13px; text-decoration: none; }
+    header .userinfo { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    header .userinfo span { color: #94a3b8; font-size: 13px; }
+    header .userinfo a { color: #94a3b8; font-size: 13px; text-decoration: none; }
+    header .userinfo a:hover { color: #fff; }
     main { max-width: 1100px; margin: 32px auto; padding: 0 24px; }
     h1 { font-size: 22px; font-weight: 700; margin-bottom: 24px; }
     .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); margin-bottom: 24px; }
@@ -61,7 +66,11 @@ function adminLayout(string $title, string $body, string $role = 'admin'): void
   <header>
     <span class="brand">STEKWIRED Admin</span>
     <nav>{$nav}</nav>
-    <div class="logout"><a href="/ai-chat/admin/logout.php">ログアウト</a></div>
+    <div class="userinfo">
+      <span>{$email} ({$currentRole})</span>
+      <a href="/ai-chat/admin/profile.php">アカウント</a>
+      <a href="/ai-chat/admin/logout.php">ログアウト</a>
+    </div>
   </header>
   <main>
     <h1>{$title}</h1>
