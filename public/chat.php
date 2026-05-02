@@ -39,7 +39,7 @@ if ($widgetKey === '') {
 
   <script>
     window.WIDGET_KEY = <?= json_encode($widgetKey) ?>;
-    window.BASE_URL   = '/ai-chat';
+    window.BASE_URL   = '';
   </script>
   <script src="assets/chat.js"></script>
 </body>

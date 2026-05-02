@@ -2,6 +2,22 @@
 
 ---
 
+## [0.7.0] - 2026-05-03
+
+### Added
+
+- **技術仕様書** — `docs/technical.md` を新規作成。システムアーキテクチャ・全クラス仕様・API エンドポイント仕様・定数一覧・環境構築手順・既知の制約を記載
+- **テスト仕様書** — `docs/test.md` を新規作成。チャット・管理者・編集者・widget.js の全テストケース（C-01〜C-08、A-01〜A-13、E-01〜E-04、W-01〜W-03）と合否判定基準を記載
+- **管理者マニュアル** — `docs/manual_admin.md` を新規作成。STEKWIRED 運用担当者向けの操作手順（クライアント追加・FAQ 管理・ユーザー管理・トラブルシューティング）を記載
+- **編集者マニュアル** — `docs/manual_editor.md` を新規作成。クライアント担当者向けの FAQ 登録・管理操作を専門用語を避けてわかりやすく記載
+
+### Changed
+
+- **SSL 設定を本番用に変更** — `lib/Claude.php` の `CURLOPT_SSL_VERIFYPEER` を `false` → `true`、`CURLOPT_SSL_VERIFYHOST` を `false` → `2` に変更
+- **BASE_URL を本番用に変更** — `public/chat.php` の `window.BASE_URL` を `'/ai-chat'` → `''` に変更（本番はルート配置の想定）
+
+---
+
 ## [0.4.0] - 2026-05-03
 
 ### Added
