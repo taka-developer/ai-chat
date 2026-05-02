@@ -11,7 +11,7 @@ if ($widgetKey === '') {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>チャット</title>
-  <link rel="stylesheet" href="/assets/chat.css">
+  <link rel="stylesheet" href="assets/chat.css">
 </head>
 <body>
   <div id="chat-container">
@@ -39,8 +39,8 @@ if ($widgetKey === '') {
 
   <script>
     window.WIDGET_KEY = <?= json_encode($widgetKey) ?>;
-    window.BASE_URL   = '';
+    window.BASE_URL   = '/ai-chat';
   </script>
-  <script src="/assets/chat.js"></script>
+  <script src="assets/chat.js"></script>
 </body>
 </html>

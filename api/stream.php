@@ -1,4 +1,10 @@
 <?php
+ini_set('output_buffering', 'Off');
+ini_set('zlib.output_compression', 'Off');
+ini_set('display_errors', '0');
+set_time_limit(120);
+while (ob_get_level() > 0) ob_end_clean();
+
 require_once __DIR__ . '/../lib/DB.php';
 require_once __DIR__ . '/../lib/Claude.php';
 require_once __DIR__ . '/../lib/FaqSearch.php';
@@ -61,12 +67,9 @@ try {
         function (string $chunk) use (&$fullAnswer) {
             $fullAnswer .= $chunk;
             sendEvent('chunk', $chunk);
-            ob_flush();
-            flush();
         }
     );
 
-    // 会話ログ保存
     $pdo->prepare(
         'INSERT INTO conversation_logs (client_id, session_id, user_message, bot_response, matched_faq_ids)
          VALUES (?, ?, ?, ?, ?)'
@@ -78,10 +81,13 @@ try {
         json_encode($matchedIds),
     ]);
 
+    // API使用量をSSEで送信
+    sendEvent('usage', json_encode($claude->getUsageLog()));
+
     sendEvent('done', '');
 
-} catch (RuntimeException $e) {
-    error_log($e->getMessage());
+} catch (Throwable $e) {
+    error_log('stream.php error: ' . $e->getMessage());
     sendEvent('error', 'service_unavailable');
 }
 
@@ -89,6 +95,5 @@ function sendEvent(string $event, string $data): void
 {
     echo "event: {$event}\n";
     echo 'data: ' . json_encode($data) . "\n\n";
-    ob_flush();
     flush();
 }

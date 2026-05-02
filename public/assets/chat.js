@@ -19,7 +19,6 @@
   let sending = false;
   let cooldownTimer = null;
 
-  // 初期サジェスト
   const INIT_SUGGESTIONS = [
     'よくある質問は？',
     '料金を教えてください',
@@ -29,6 +28,7 @@
   ];
 
   function init() {
+    console.log('[Chat] 初期化 widget_key=' + WIDGET_KEY + ' session=' + sessionId);
     appendBotMsg('こんにちは！何でもお気軽にご質問ください。');
     renderSuggestions(INIT_SUGGESTIONS);
     closeBtn.addEventListener('click', () => window.parent.postMessage('sw:close', '*'));
@@ -60,6 +60,7 @@
     const text = inputEl.value.trim();
     if (!text || text.length > MAX_LEN || sending) return;
 
+    console.log('[Chat] 送信開始:', text);
     sending = true;
     sendBtn.disabled = true;
     inputEl.value = '';
@@ -70,6 +71,7 @@
     const typingEl = appendTyping();
 
     try {
+      console.log('[Chat] stream.php へリクエスト送信');
       const res = await fetch(`${BASE_URL}/api/stream.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,47 +80,76 @@
 
       typingEl.remove();
 
-      if (!res.ok) throw new Error('http_error');
+      if (!res.ok) {
+        console.error('[Chat] HTTPエラー:', res.status);
+        throw new Error('http_error');
+      }
 
+      console.log('[Chat] ストリーミング開始');
       const botEl = appendBotMsg('');
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = '';
+      let chunkCount = 0;
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('[Chat] ストリーミング完了 チャンク数=' + chunkCount);
+          break;
+        }
         buf += decoder.decode(value, { stream: true });
         const lines = buf.split('\n');
         buf = lines.pop();
 
+        let currentEvent = '';
         for (const line of lines) {
-          if (line.startsWith('event: chunk')) continue;
-          if (line.startsWith('data: ')) {
-            const chunk = JSON.parse(line.slice(6));
-            botEl.textContent += chunk;
-            scrollBottom();
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim();
+            console.log('[Chat] イベント:', currentEvent);
+            continue;
           }
-          if (line.startsWith('event: error')) {
-            const next = lines[lines.indexOf(line) + 1] ?? '';
-            const err = next.startsWith('data: ') ? JSON.parse(next.slice(6)) : '';
-            botEl.textContent = errorMessage(err);
+          if (line.startsWith('data: ')) {
+            const data = JSON.parse(line.slice(6));
+            if (currentEvent === 'chunk') {
+              botEl.textContent += data;
+              chunkCount++;
+              scrollBottom();
+            } else if (currentEvent === 'error') {
+              console.error('[Chat] サーバーエラー:', data);
+              botEl.textContent = errorMessage(data);
+            } else if (currentEvent === 'usage') {
+              const usageList = JSON.parse(data);
+              let totalIn = 0, totalOut = 0;
+              console.group('[Claude API] トークン使用量');
+              usageList.forEach(u => {
+                console.log(`  📡 ${u.call} — model: ${u.model} | input: ${u.input_tokens} | output: ${u.output_tokens}`);
+                totalIn  += u.input_tokens;
+                totalOut += u.output_tokens;
+              });
+              console.log(`  📊 合計 — input: ${totalIn} | output: ${totalOut} | total: ${totalIn + totalOut} tokens`);
+              console.groupEnd();
+            } else if (currentEvent === 'done') {
+              console.log('[Chat] done受信');
+            }
+            currentEvent = '';
           }
         }
       }
 
       appendFeedback();
 
-    } catch {
+    } catch (err) {
+      console.error('[Chat] 例外:', err);
       typingEl?.remove();
       appendBotMsg('申し訳ありません。一時的なエラーが発生しました。しばらく後にお試しください。');
     }
 
-    // 送信クールダウン
     clearTimeout(cooldownTimer);
     cooldownTimer = setTimeout(() => {
       sending = false;
       sendBtn.disabled = inputEl.value.trim() === '' || inputEl.value.length > MAX_LEN;
+      console.log('[Chat] クールダウン終了 再送信可能');
     }, SEND_COOL);
   }
 
@@ -162,7 +193,9 @@
 
     el.querySelectorAll('button').forEach(btn => {
       btn.addEventListener('click', function () {
-        el.innerHTML = this.dataset.v === '1'
+        const positive = this.dataset.v === '1';
+        console.log('[Chat] フィードバック:', positive ? '👍' : '👎');
+        el.innerHTML = positive
           ? '<span>ありがとうございました！</span>'
           : '<span>ご不便をおかけしました。</span><div class="feedback-contact"><a href="#" id="contact-link">担当者へ相談する →</a></div>';
 

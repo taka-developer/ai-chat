@@ -1,6 +1,6 @@
 <?php
 define('ANTHROPIC_API_KEY', 'sk-ant-xxxx');
-define('ANTHROPIC_MODEL', 'claude-sonnet-4-5-20251001');
+define('ANTHROPIC_MODEL', 'claude-haiku-4-5-20251001');
 
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'chatbot');
