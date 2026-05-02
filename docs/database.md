@@ -82,6 +82,8 @@ FAQ 本体。クライアントごとに管理される。
 | email | VARCHAR(200) UNIQUE NOT NULL | メールアドレス（ログイン ID） |
 | password_hash | VARCHAR(255) NOT NULL | `password_hash()` でハッシュ化 |
 | role | ENUM('admin','editor') DEFAULT 'editor' | ロール |
+| login_failed_count | INT DEFAULT 0 | 連続ログイン失敗回数 |
+| login_locked_until | DATETIME DEFAULT NULL | ロック解除日時（NULL = ロックなし） |
 | created_at | DATETIME | 登録日時 |
 
 **ロール別アクセス制御**

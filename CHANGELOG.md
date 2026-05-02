@@ -2,6 +2,28 @@
 
 ---
 
+## [0.4.0] - 2026-05-03
+
+### Added
+
+- **FAQ インライン編集** — `admin/faqs.php` / `admin/editor/faqs.php` の各行に「編集」ボタンを追加。行内にフォームが展開し、カテゴリ・質問・回答・キーワード・優先度を編集可能。キーワード空欄時は Claude API で自動生成（既存 add と同挙動）
+- **クライアント情報編集** — `admin/clients.php` の各行に「編集」ボタンを追加。会社名・システムプロンプト・お問い合わせ URL をインライン編集可能（widget_key は変更不可）
+- **ユーザー管理ページ** — `admin/users.php` を新規作成。編集者アカウントの追加・削除が可能。自分自身の削除は不可
+- **パスワード変更ページ** — `admin/profile.php` を新規作成。管理者・編集者共通。現在のパスワード確認 → 新パスワード変更
+- **ヘッダーにログイン情報表示** — `admin/_layout.php` のヘッダーにメールアドレスとロールを表示。「アカウント」リンクを追加
+
+### Security
+
+- **ログイン失敗ロック** — 連続 5 回失敗で 30 分ロック。`admin_users` テーブルに `login_failed_count` / `login_locked_until` カラムを追加。ロック中はエラーメッセージを表示
+- **セッションタイムアウト** — `Auth::start()` で最終アクセス時刻を管理。`SESSION_TIMEOUT`（デフォルト 3600 秒）超過でセッション破棄 → ログイン画面へリダイレクト
+
+### Changed
+
+- `config/config.example.php` に `SESSION_TIMEOUT` 定数を追加
+- `sql/schema.sql` の `admin_users` テーブル定義に `login_failed_count` / `login_locked_until` を追加
+
+---
+
 ## [0.3.0] - 2026-05-02
 
 ### Added

@@ -99,16 +99,22 @@ foreach ($faqs as $faq) {
 ## 5. 認証フロー（管理画面）
 
 ```
-GET /admin/index.php
+GET /ai-chat/admin/index.php
     │
     ▼
+Auth::start()
+    │
+    ├─ セッションあり & last_activity 超過 → セッション破棄 → login.php?timeout=1
+    └─ タイムアウトなし → last_activity 更新
+         │
+         ▼
 Auth::requireAdmin()
     │
-    ├─ セッション未認証 → /admin/login.php へリダイレクト
+    ├─ セッション未認証 → /ai-chat/admin/login.php へリダイレクト
     └─ 認証済み
          │
          ├─ role = 'admin'  → 管理者画面（全クライアント操作可）
-         └─ role = 'editor' → /admin/editor/ へリダイレクト
+         └─ role = 'editor' → /ai-chat/admin/editor/ へリダイレクト
                               （自社 client_id のデータのみ操作可）
 ```
 
@@ -175,7 +181,58 @@ CsvImporter::import()
 
 ---
 
-## 8. FAQ キーワード自動生成フロー
+## 8. ログイン失敗ロックフロー
+
+```
+POST /ai-chat/admin/login.php
+    │
+    ▼
+Auth::login()
+    │
+    ├─ ユーザーが存在しない → false（エラーなし）
+    │
+    ├─ login_locked_until > NOW() → false（Auth::loginError() = 'locked'）
+    │
+    ├─ password_verify() 失敗
+    │    │
+    │    ├─ login_failed_count < 5 → カウント +1 → false
+    │    └─ login_failed_count >= 5 → login_locked_until = NOW()+30分 → false（'locked'）
+    │
+    └─ 成功 → login_failed_count=0, login_locked_until=NULL → セッション設定
+```
+
+ロック中のエラーメッセージ：「ログインに5回失敗しました。30分後に再試行してください。」
+
+---
+
+## 9. セッションタイムアウトフロー
+
+```
+Auth::start()（全管理ページで実行）
+    │
+    ├─ $_SESSION['user_id'] なし → スルー（未認証ユーザーは対象外）
+    │
+    └─ $_SESSION['user_id'] あり
+         │
+         ├─ last_activity 未設定 → last_activity = NOW() → 継続
+         │
+         ├─ NOW() - last_activity <= SESSION_TIMEOUT → last_activity 更新 → 継続
+         │
+         └─ NOW() - last_activity > SESSION_TIMEOUT
+              │
+              ▼
+         session_destroy() → session_start()（空セッション）
+              │
+              ▼
+         redirect: /ai-chat/admin/login.php?timeout=1
+              │
+              ▼（login.php）
+         「セッションの有効期限が切れました。再度ログインしてください。」
+```
+
+---
+
+## 10. FAQ キーワード自動生成フロー
 
 FAQ 登録・保存時に `keywords` が空の場合、Claude API を呼び出してキーワードを自動生成する。
 

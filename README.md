@@ -43,12 +43,14 @@ Claude API（Anthropic）を使用し、PHP + MySQL + Vanilla JS で構成した
 ├── admin/
 │   ├── login.php / logout.php
 │   ├── index.php          # 管理者ダッシュボード
-│   ├── clients.php        # クライアント管理
-│   ├── faqs.php           # FAQ 管理（管理者）
+│   ├── clients.php        # クライアント管理（追加・編集・削除）
+│   ├── faqs.php           # FAQ 管理（管理者・追加・編集・削除・CSV インポート）
 │   ├── logs.php           # 会話ログ
+│   ├── users.php          # ユーザー管理（編集者アカウント追加・削除）
+│   ├── profile.php        # パスワード変更（管理者・編集者共通）
 │   └── editor/
 │       ├── index.php      # 編集者ダッシュボード
-│       ├── faqs.php       # FAQ 管理（編集者）
+│       ├── faqs.php       # FAQ 管理（編集者・追加・編集・削除・CSV インポート）
 │       └── categories.php # カテゴリ管理
 ├── lib/
 │   ├── Claude.php         # Claude API クライアント
@@ -138,6 +140,8 @@ http://localhost/ai-chat/admin/login.php
 ## 本番デプロイ時の注意事項
 
 - `config/config.php` の `CURLOPT_SSL_VERIFYPEER` を `true` に戻す（現在はローカル開発用に `false`）
+- `config/config.php` に `SESSION_TIMEOUT` を追加する（例: `define('SESSION_TIMEOUT', 3600);`）
 - `public/chat.php` の `BASE_URL` を本番ドメインに変更
 - `public/widget.js` の `BASE_URL` を本番ドメインに変更
-- 初期管理者パスワードを変更する
+- 初期管理者パスワードを変更する（管理画面 → アカウント → パスワード変更）
+- 既存 DB の場合は `sql/schema.sql` の ALTER TABLE コメントを実行してカラムを追加する
