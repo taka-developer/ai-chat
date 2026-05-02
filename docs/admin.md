@@ -14,28 +14,28 @@
 ### ログイン
 
 ```
-URL: /admin/login.php
+URL: /ai-chat/admin/login.php
 ```
 
 - メールアドレスとパスワードでログイン
 - ログイン成功後、ロールに応じてリダイレクト
-  - `admin` → `/admin/index.php`
-  - `editor` → `/admin/editor/index.php`
+  - `admin` → `/ai-chat/admin/index.php`
+  - `editor` → `/ai-chat/admin/editor/index.php`
 - ログイン時に `session_regenerate_id(true)` でセッション固定攻撃を防止
 
 ### ログアウト
 
 ```
-URL: /admin/logout.php
+URL: /ai-chat/admin/logout.php
 ```
 
-セッションを破棄して `/admin/login.php` へリダイレクト。
+セッションを破棄して `/ai-chat/admin/login.php` へリダイレクト。
 
 ---
 
 ## 管理者画面（STEKWIRED 専用）
 
-### ダッシュボード `/admin/index.php`
+### ダッシュボード `/ai-chat/admin/index.php`
 
 | 表示項目 | 内容 |
 |---|---|
@@ -45,7 +45,7 @@ URL: /admin/logout.php
 | 本日の会話数 | 当日の会話数 |
 | 最近の会話ログ | 直近 10 件（日時・クライアント・ユーザー入力） |
 
-### クライアント管理 `/admin/clients.php`
+### クライアント管理 `/ai-chat/admin/clients.php`
 
 **一覧表示**
 
@@ -67,11 +67,22 @@ URL: /admin/logout.php
 
 追加時に `widget_key` を自動生成（`bin2hex(random_bytes(32))`）。
 
-### FAQ 管理 `/admin/faqs.php`
+### FAQ 管理 `/ai-chat/admin/faqs.php`
 
 全クライアントの FAQ を横断的に管理する。
 
-**追加フォーム**
+**CSV インポート**
+
+| 項目 | 必須 | 説明 |
+|---|---|---|
+| クライアント | ✅ | インポート先クライアントを選択 |
+| CSVファイル | ✅ | `.csv` 形式（UTF-8 / UTF-8 BOM 対応） |
+| キーワード自動生成 | — | チェックで keywords 空行を Claude API が補完 |
+
+対応ヘッダー（日本語・英語どちらも可）：`category` / `question` / `answer` / `keywords` / `priority`  
+サンプル CSV は `/ai-chat/admin/sample_faq.csv` からダウンロード可能。
+
+**手動追加フォーム**
 
 | 項目 | 必須 | 説明 |
 |---|---|---|
@@ -87,7 +98,7 @@ URL: /admin/logout.php
 - 公開 / 非公開の切り替え（即時反映）
 - 削除（確認ダイアログあり）
 
-### 会話ログ `/admin/logs.php`
+### 会話ログ `/ai-chat/admin/logs.php`
 
 - クライアントでフィルタリング可能
 - 1 ページあたり 30 件・ページネーション付き
@@ -99,7 +110,7 @@ URL: /admin/logout.php
 
 自社 `client_id` のデータのみ操作可能。他社データへのアクセスは不可。
 
-### ダッシュボード `/admin/editor/index.php`
+### ダッシュボード `/ai-chat/admin/editor/index.php`
 
 | 表示項目 | 内容 |
 |---|---|
@@ -108,15 +119,22 @@ URL: /admin/logout.php
 | 本日の会話数 | 当日の会話数 |
 | 最近の会話 | 直近 10 件 |
 
-### FAQ 管理 `/admin/editor/faqs.php`
+### FAQ 管理 `/ai-chat/admin/editor/faqs.php`
 
 管理者画面の FAQ 管理と同機能。ただし自社 FAQ のみ対象。
+
+**CSV インポート**
+
+クライアント選択不要（セッションの `client_id` を自動適用）。  
+その他の仕様は管理者版と同様。
+
+**手動追加**
 
 - カテゴリ入力は `<datalist>` でサジェスト表示
 - キーワード空欄 → Claude API で自動生成
 - 公開 / 非公開の切り替え・削除
 
-### カテゴリ管理 `/admin/editor/categories.php`
+### カテゴリ管理 `/ai-chat/admin/editor/categories.php`
 
 `faq_categories` テーブルを管理する。
 

@@ -52,6 +52,7 @@ Claude API（Anthropic）を使用し、PHP + MySQL + Vanilla JS で構成した
 │       └── categories.php # カテゴリ管理
 ├── lib/
 │   ├── Claude.php         # Claude API クライアント
+│   ├── CsvImporter.php    # FAQ CSV 一括インポート
 │   ├── FaqSearch.php      # FAQ 検索・スコアリング
 │   ├── Auth.php           # 認証
 │   ├── RateLimit.php      # レート制限
@@ -61,6 +62,8 @@ Claude API（Anthropic）を使用し、PHP + MySQL + Vanilla JS で構成した
 ├── config/
 │   ├── config.php         # 環境設定（Git 管理外）
 │   └── config.example.php # 設定テンプレート
+├── tools/
+│   └── reset_password.php # 管理者パスワードリセット（ローカル用）
 └── docs/
     ├── spec.md            # システム仕様書
     ├── flow.md            # 処理フロー

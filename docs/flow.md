@@ -130,7 +130,52 @@ rate_limits テーブルを参照（IP × client_id × 直近1時間）
 
 ---
 
-## 7. FAQ キーワード自動生成フロー
+## 7. CSV インポートフロー
+
+管理画面の FAQ 管理ページから CSV を一括インポートする。
+
+```
+ファイルアップロード（POST enctype="multipart/form-data"）
+    │
+    ▼
+CsvImporter::import()
+    │
+    ├─ ファイルエラーチェック（UPLOAD_ERR_OK）
+    ├─ 拡張子チェック（.csv のみ）
+    ├─ BOM 除去（UTF-8 BOM: \xEF\xBB\xBF）
+    ├─ ヘッダー行の正規化（日本語→内部キー変換）
+    └─ 必須カラム確認（question / answer）
+         │
+         ▼
+    行ループ
+         │
+         ├─ question / answer が空 → skipped++
+         │
+         └─ keywords が空 かつ autoKeywords=true
+              │
+              ▼
+         Claude API（generateFaqKeywords）
+              │
+              ▼
+         INSERT INTO faqs → imported++
+    │
+    ▼
+結果を返す {imported, skipped, errors[]}
+```
+
+**対応ヘッダーエイリアス**
+
+| CSV 列名 | 内部キー |
+|---|---|
+| `カテゴリ` / `category` | `category` |
+| `質問` / `question` | `question` |
+| `回答` / `answer` | `answer` |
+| `キーワード` / `keywords` | `keywords` |
+| `優先度` / `priority` | `priority` |
+
+---
+
+## 8. FAQ キーワード自動生成フロー
 
 FAQ 登録・保存時に `keywords` が空の場合、Claude API を呼び出してキーワードを自動生成する。
 
