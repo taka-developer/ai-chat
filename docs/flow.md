@@ -1,0 +1,148 @@
+# 処理フロー
+
+---
+
+## 1. メッセージ送受信フロー（全体）
+
+```
+ユーザー入力
+    │
+    ▼
+[chat.js] バリデーション（空・200文字超チェック）
+    │
+    ▼
+[api/stream.php] POST受信
+    │
+    ├─ widget_key → クライアント特定
+    ├─ バリデーション（空・200文字超）
+    └─ レート制限チェック（30回/時）
+         │ 超過 → 429 エラーイベント送信
+         ▼
+[lib/Claude.php] ① キーワード抽出
+    │  ユーザー入力 → Claude API → JSON配列（3〜5語）
+    │  例: ["土日", "診療", "休日"]
+    ▼
+[lib/FaqSearch.php] ② FAQ検索・スコアリング
+    │  キーワード × keywords/question カラム LIKE検索
+    │  スコア上位3件を取得
+    ▼
+[lib/Claude.php] ③ 回答生成
+    │  システムプロンプト + ヒットFAQ + ユーザー質問 → Claude API
+    │  回答テキストを擬似ストリーミングで送信
+    ▼
+[api/stream.php] 会話ログ保存（conversation_logs テーブル）
+    │
+    ▼
+[chat.js] SSE受信 → チャット画面に表示
+```
+
+---
+
+## 2. SSE（Server-Sent Events）フロー
+
+`api/stream.php` は `text/event-stream` でレスポンスを返す。
+
+```
+event: chunk        ← 回答テキストの断片
+data: "こんにちは"
+
+event: chunk
+data: "！ご質問は"
+
+event: usage        ← トークン使用量（開発用コンソール表示）
+data: "[{...}]"
+
+event: done         ← 完了
+data: ""
+```
+
+エラー発生時：
+
+```
+event: error
+data: "rate_limit_exceeded"
+```
+
+---
+
+## 3. FAQ 検索・スコアリング詳細
+
+```php
+foreach ($faqs as $faq) {
+    $score = 0;
+    foreach ($keywords as $kw) {
+        if (str_contains($faq['keywords'], $kw)) $score++;   // +1
+        if (str_contains($faq['question'], $kw)) $score++;   // +1
+    }
+    $score += $faq['priority'];  // priority 値を加算
+}
+
+// ソート順：スコア降順 → priority 降順 → updated_at 降順
+// 上位 MAX_FAQ_RESULTS 件（デフォルト3件）を取得
+```
+
+---
+
+## 4. Claude API 呼び出し詳細
+
+1回のチャットで Claude API を **最大2回** 呼び出す。
+
+| 呼び出し | メソッド | 用途 | max_tokens |
+|---|---|---|---|
+| `extractKeywords()` | `request()` | キーワード抽出 | 256 |
+| `streamAnswer()` | `request()` | 回答生成 | 1024 |
+
+> Windows/XAMPP では `CURLOPT_WRITEFUNCTION` が不安定なため、回答生成も通常リクエストで全文取得後に擬似ストリーミング（句読点・5文字単位で分割送信）で代替している。
+
+---
+
+## 5. 認証フロー（管理画面）
+
+```
+GET /admin/index.php
+    │
+    ▼
+Auth::requireAdmin()
+    │
+    ├─ セッション未認証 → /admin/login.php へリダイレクト
+    └─ 認証済み
+         │
+         ├─ role = 'admin'  → 管理者画面（全クライアント操作可）
+         └─ role = 'editor' → /admin/editor/ へリダイレクト
+                              （自社 client_id のデータのみ操作可）
+```
+
+---
+
+## 6. レート制限フロー
+
+```
+リクエスト受信
+    │
+    ▼
+rate_limits テーブルを参照（IP × client_id × 直近1時間）
+    │
+    ├─ 30回未満 → request_count + 1 → 処理継続
+    └─ 30回以上 → 429 / rate_limit_exceeded
+```
+
+期限切れレコード（1時間超）は次回リクエスト時に自動削除。
+
+---
+
+## 7. FAQ キーワード自動生成フロー
+
+FAQ 登録・保存時に `keywords` が空の場合、Claude API を呼び出してキーワードを自動生成する。
+
+```
+FAQ保存
+    │
+    ├─ keywords が入力済み → そのまま保存
+    └─ keywords が空
+         │
+         ▼
+    Claude API（generateFaqKeywords）
+         │ question + answer → キーワード 5〜10語
+         ▼
+    自動生成キーワードを DB に保存
+```
