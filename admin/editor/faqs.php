@@ -2,12 +2,14 @@
 require_once __DIR__ . '/../../lib/Auth.php';
 require_once __DIR__ . '/../../lib/DB.php';
 require_once __DIR__ . '/../../lib/Claude.php';
+require_once __DIR__ . '/../../lib/CsvImporter.php';
 require_once __DIR__ . '/../_layout.php';
 Auth::requireEditor();
 
-$pdo      = DB::get();
-$clientId = Auth::clientId();
-$flash    = '';
+$pdo       = DB::get();
+$clientId  = Auth::clientId();
+$flash     = '';
+$csvResult = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -43,6 +45,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare('DELETE FROM faqs WHERE id = ? AND client_id = ?')->execute([$id, $clientId]);
         $flash = 'success:FAQを削除しました。';
     }
+
+    if ($action === 'csv_import') {
+        $autoKeywords = !empty($_POST['auto_keywords']);
+        if (empty($_FILES['csv']['name'])) {
+            $flash = 'error:CSVファイルを選択してください。';
+        } else {
+            $csvResult = (new CsvImporter())->import($_FILES['csv'], $clientId, $autoKeywords);
+            if ($csvResult['imported'] > 0) {
+                $flash = "success:{$csvResult['imported']} 件インポートしました。";
+            } elseif (empty($csvResult['errors'])) {
+                $flash = 'error:インポート対象がありませんでした。';
+            }
+        }
+    }
 }
 
 $faqs = $pdo->prepare(
@@ -62,6 +78,45 @@ ob_start();
 <?php if ($flashMsg): ?>
   <div class="flash flash-<?= $flashType === 'success' ? 'success' : 'error' ?>"><?= htmlspecialchars($flashMsg, ENT_QUOTES, 'UTF-8') ?></div>
 <?php endif; ?>
+
+<div class="card">
+  <h2 style="font-size:16px;margin-bottom:16px;">CSVインポート</h2>
+  <p style="font-size:13px;color:#64748b;margin-bottom:12px;">
+    <a href="/ai-chat/admin/sample_faq.csv" download style="color:#2563eb;">サンプルCSVをダウンロード</a>
+    &nbsp;|&nbsp; 対応カラム: category / question / answer / keywords / priority（日本語ヘッダーも可）
+  </p>
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="action" value="csv_import">
+    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="margin-bottom:0;flex:2;min-width:220px;">
+        <label>CSVファイル *</label>
+        <input type="file" name="csv" accept=".csv" required>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;white-space:nowrap;padding-bottom:2px;">
+        <input type="checkbox" name="auto_keywords" id="auto_kw" value="1" style="width:auto;">
+        <label for="auto_kw" style="margin-bottom:0;font-weight:400;">キーワード自動生成（Claude API）</label>
+      </div>
+      <div style="padding-bottom:2px;">
+        <button class="btn btn-primary" type="submit">インポート</button>
+      </div>
+    </div>
+  </form>
+  <?php if ($csvResult): ?>
+    <div style="margin-top:16px;font-size:13px;">
+      <span style="color:#16a34a;font-weight:600;">✓ <?= (int)$csvResult['imported'] ?> 件インポート</span>
+      <?php if ($csvResult['skipped']): ?>
+        &nbsp; <span style="color:#64748b;"><?= (int)$csvResult['skipped'] ?> 件スキップ</span>
+      <?php endif; ?>
+      <?php if ($csvResult['errors']): ?>
+        <ul style="margin-top:8px;color:#dc2626;list-style:disc;padding-left:20px;">
+          <?php foreach ($csvResult['errors'] as $e): ?>
+            <li><?= htmlspecialchars($e, ENT_QUOTES, 'UTF-8') ?></li>
+          <?php endforeach; ?>
+        </ul>
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+</div>
 
 <div class="card">
   <h2 style="font-size:16px;margin-bottom:16px;">FAQ追加</h2>

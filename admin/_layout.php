@@ -2,14 +2,14 @@
 function adminLayout(string $title, string $body, string $role = 'admin'): void
 {
     $navAdmin = '
-      <a href="/admin/index.php">ダッシュボード</a>
-      <a href="/admin/clients.php">クライアント</a>
-      <a href="/admin/faqs.php">FAQ</a>
-      <a href="/admin/logs.php">ログ</a>';
+      <a href="/ai-chat/admin/index.php">ダッシュボード</a>
+      <a href="/ai-chat/admin/clients.php">クライアント</a>
+      <a href="/ai-chat/admin/faqs.php">FAQ</a>
+      <a href="/ai-chat/admin/logs.php">ログ</a>';
     $navEditor = '
-      <a href="/admin/editor/index.php">ダッシュボード</a>
-      <a href="/admin/editor/faqs.php">FAQ管理</a>
-      <a href="/admin/editor/categories.php">カテゴリ</a>';
+      <a href="/ai-chat/admin/editor/index.php">ダッシュボード</a>
+      <a href="/ai-chat/admin/editor/faqs.php">FAQ管理</a>
+      <a href="/ai-chat/admin/editor/categories.php">カテゴリ</a>';
     $nav = $role === 'admin' ? $navAdmin : $navEditor;
     echo <<<HTML
 <!DOCTYPE html>
@@ -61,7 +61,7 @@ function adminLayout(string $title, string $body, string $role = 'admin'): void
   <header>
     <span class="brand">STEKWIRED Admin</span>
     <nav>{$nav}</nav>
-    <div class="logout"><a href="/admin/logout.php">ログアウト</a></div>
+    <div class="logout"><a href="/ai-chat/admin/logout.php">ログアウト</a></div>
   </header>
   <main>
     <h1>{$title}</h1>

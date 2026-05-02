@@ -40,7 +40,7 @@ class Auth
     {
         self::start();
         if (empty($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
-            header('Location: /admin/login.php');
+            header('Location: /ai-chat/admin/login.php');
             exit;
         }
     }
@@ -49,7 +49,7 @@ class Auth
     {
         self::start();
         if (empty($_SESSION['user_id']) || !in_array($_SESSION['role'], ['admin', 'editor'])) {
-            header('Location: /admin/login.php');
+            header('Location: /ai-chat/admin/login.php');
             exit;
         }
     }

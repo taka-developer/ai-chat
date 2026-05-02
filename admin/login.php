@@ -3,7 +3,7 @@ require_once __DIR__ . '/../lib/Auth.php';
 Auth::start();
 
 if (!empty($_SESSION['user_id'])) {
-    header('Location: ' . ($_SESSION['role'] === 'admin' ? '/admin/index.php' : '/admin/editor/index.php'));
+    header('Location: ' . ($_SESSION['role'] === 'admin' ? '/ai-chat/admin/index.php' : '/ai-chat/admin/editor/index.php'));
     exit;
 }
 
@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     if (Auth::login($email, $password)) {
-        header('Location: ' . ($_SESSION['role'] === 'admin' ? '/admin/index.php' : '/admin/editor/index.php'));
+        header('Location: ' . ($_SESSION['role'] === 'admin' ? '/ai-chat/admin/index.php' : '/ai-chat/admin/editor/index.php'));
         exit;
     }
     $error = 'メールアドレスまたはパスワードが正しくありません。';
