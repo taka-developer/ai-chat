@@ -3,7 +3,7 @@
   const widgetKey = script.getAttribute('data-key');
   if (!widgetKey) return;
 
-  const BASE_URL = 'https://chat.stekwired.jp';
+  const BASE_URL = new URL(script.src).origin + new URL(script.src).pathname.replace(/\/widget\.js$/, '');
 
   // 起動ボタン
   const btn = document.createElement('button');
@@ -39,10 +39,18 @@
   document.body.appendChild(wrapper);
 
   let open = false;
-  btn.addEventListener('click', function () {
-    open = !open;
+
+  function setOpen(val) {
+    open = val;
     wrapper.style.display = open ? 'block' : 'none';
     btn.innerHTML = open ? '✕' : '💬';
     btn.setAttribute('aria-label', open ? 'チャットを閉じる' : 'チャットを開く');
+  }
+
+  btn.addEventListener('click', () => setOpen(!open));
+
+  window.addEventListener('message', e => {
+    if (e.source !== iframe.contentWindow) return;
+    if (e.data === 'sw:close') setOpen(false);
   });
 })();

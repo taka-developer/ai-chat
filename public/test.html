@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>テスト株式会社 - 公式サイト</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1e293b; line-height: 1.7; }
+    a { color: #2563eb; text-decoration: none; }
+
+    /* Header */
+    header { background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; }
+    .header-inner { max-width: 1100px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+    .logo { font-size: 20px; font-weight: 700; color: #1e293b; }
+    .logo span { color: #2563eb; }
+    nav { display: flex; gap: 32px; font-size: 14px; }
+    nav a { color: #64748b; }
+    nav a:hover { color: #1e293b; }
+
+    /* Hero */
+    .hero { background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%); padding: 80px 24px; text-align: center; }
+    .hero h1 { font-size: 42px; font-weight: 800; line-height: 1.2; margin-bottom: 20px; }
+    .hero h1 span { color: #2563eb; }
+    .hero p { font-size: 18px; color: #475569; max-width: 540px; margin: 0 auto 36px; }
+    .btn-primary { display: inline-block; background: #2563eb; color: #fff; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px; }
+    .btn-primary:hover { background: #1d4ed8; color: #fff; }
+    .btn-outline { display: inline-block; border: 2px solid #2563eb; color: #2563eb; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 16px; margin-left: 12px; }
+
+    /* Section */
+    section { padding: 72px 24px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-title { font-size: 28px; font-weight: 700; text-align: center; margin-bottom: 8px; }
+    .section-sub { text-align: center; color: #64748b; margin-bottom: 48px; font-size: 15px; }
+
+    /* Features */
+    .features { background: #fff; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+    .feature-card { background: #f8fafc; border-radius: 12px; padding: 32px; }
+    .feature-icon { font-size: 32px; margin-bottom: 16px; }
+    .feature-card h3 { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+    .feature-card p { font-size: 14px; color: #64748b; }
+
+    /* Pricing */
+    .pricing { background: #f8fafc; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; max-width: 860px; margin: 0 auto; }
+    .pricing-card { background: #fff; border-radius: 16px; padding: 36px; border: 2px solid #e2e8f0; }
+    .pricing-card.featured { border-color: #2563eb; }
+    .plan-name { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; }
+    .plan-price { font-size: 40px; font-weight: 800; margin-bottom: 4px; }
+    .plan-price span { font-size: 16px; font-weight: 400; color: #64748b; }
+    .plan-desc { font-size: 14px; color: #64748b; margin-bottom: 24px; }
+    .plan-features { list-style: none; font-size: 14px; color: #475569; display: flex; flex-direction: column; gap: 10px; }
+    .plan-features li::before { content: '✓ '; color: #16a34a; font-weight: 700; }
+
+    /* FAQ preview */
+    .faq-section { background: #fff; }
+    .faq-list { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+    .faq-item { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+    .faq-q { padding: 18px 20px; font-weight: 600; font-size: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .faq-q:hover { background: #f8fafc; }
+    .faq-a { padding: 0 20px 18px; font-size: 14px; color: #475569; display: none; }
+    .faq-item.open .faq-a { display: block; }
+    .faq-item.open .faq-q::after { content: '−'; }
+    .faq-q::after { content: '＋'; color: #94a3b8; }
+
+    /* CTA */
+    .cta { background: #2563eb; color: #fff; text-align: center; }
+    .cta h2 { font-size: 30px; font-weight: 800; margin-bottom: 12px; }
+    .cta p { font-size: 16px; opacity: .85; margin-bottom: 32px; }
+    .btn-white { display: inline-block; background: #fff; color: #2563eb; padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 16px; }
+
+    /* Footer */
+    footer { background: #1e293b; color: #94a3b8; text-align: center; padding: 32px 24px; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="logo">テスト<span>株式会社</span></div>
+      <nav>
+        <a href="#">サービス</a>
+        <a href="#">料金</a>
+        <a href="#">よくある質問</a>
+        <a href="#">お問い合わせ</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="hero">
+    <h1>業務を、もっと<span>シンプル</span>に。</h1>
+    <p>テスト株式会社のクラウドサービスで、チームの生産性を最大化しましょう。</p>
+    <a href="#" class="btn-primary">無料で始める</a>
+    <a href="#" class="btn-outline">資料請求</a>
+  </div>
+
+  <section class="features">
+    <div class="container">
+      <h2 class="section-title">選ばれる3つの理由</h2>
+      <p class="section-sub">シンプルな設計で、導入初日から使いこなせます。</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <h3>すぐに使える</h3>
+          <p>アカウント作成から5分でご利用開始。難しい設定は一切不要です。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>安心のセキュリティ</h3>
+          <p>データは国内サーバーで管理。ISO 27001準拠の厳格なセキュリティ体制。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>わかりやすいレポート</h3>
+          <p>利用状況をダッシュボードでリアルタイム把握。経営判断を素早くサポート。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pricing">
+    <div class="container">
+      <h2 class="section-title">シンプルな料金プラン</h2>
+      <p class="section-sub">すべてのプランで14日間の無料トライアルをご利用いただけます。</p>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="plan-name">スタンダード</div>
+          <div class="plan-price">¥980<span>／月</span></div>
+          <div class="plan-desc">小規模チーム向け</div>
+          <ul class="plan-features">
+            <li>ユーザー5名まで</li>
+            <li>ストレージ 10GB</li>
+            <li>メールサポート</li>
+          </ul>
+        </div>
+        <div class="pricing-card featured">
+          <div class="plan-name">プロ</div>
+          <div class="plan-price">¥2,980<span>／月</span></div>
+          <div class="plan-desc">成長する企業向け</div>
+          <ul class="plan-features">
+            <li>ユーザー無制限</li>
+            <li>ストレージ 100GB</li>
+            <li>チャット優先サポート</li>
+            <li>詳細レポート機能</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="faq-section">
+    <div class="container">
+      <h2 class="section-title">よくある質問</h2>
+      <p class="section-sub">解決しない場合は右下のチャットからお気軽にご相談ください。</p>
+      <div class="faq-list">
+        <div class="faq-item">
+          <div class="faq-q">月額料金はいくらですか？</div>
+          <div class="faq-a">スタンダードプランは月額980円（税込）、プロプランは月額2,980円（税込）でご利用いただけます。</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">営業時間を教えてください</div>
+          <div class="faq-a">平日9:00〜18:00が営業時間です。土日祝は休業となります。</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-q">キャンセル・返品はできますか？</div>
+          <div class="faq-a">購入後7日以内であればキャンセル・返品を承ります。お問い合わせフォームよりご連絡ください。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="container">
+      <h2>まずは無料で試してみましょう</h2>
+      <p>クレジットカード不要。14日間すべての機能をお試しいただけます。</p>
+      <a href="#" class="btn-white">無料トライアルを始める</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 テスト株式会社. All rights reserved.</p>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.faq-q').forEach(q => {
+      q.addEventListener('click', () => q.parentElement.classList.toggle('open'));
+    });
+  </script>
+
+  <!-- ウィジェット埋め込み（widget_key を実際の値に変更して使用） -->
+  <script src="http://localhost/ai-chat/public/widget.js"
+    data-key="1d4ee999c4c896a8d0c04036fe779997c6d968dcfb98811f598a3fa7efee682d"></script>
+
+</body>
+</html>
