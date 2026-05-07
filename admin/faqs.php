@@ -90,6 +90,14 @@ $faqs    = $pdo->query(
     'SELECT f.*, c.name AS client_name FROM faqs f JOIN clients c ON c.id = f.client_id ORDER BY f.client_id, f.priority DESC, f.updated_at DESC'
 )->fetchAll();
 
+$allCategories = [];
+foreach ($faqs as $f) {
+    if (!empty($f['category']) && !in_array($f['category'], $allCategories)) {
+        $allCategories[] = $f['category'];
+    }
+}
+sort($allCategories);
+
 [$flashType, $flashMsg] = $flash ? explode(':', $flash, 2) : ['', ''];
 
 ob_start();
@@ -98,7 +106,7 @@ ob_start();
   <div class="flash flash-<?= $flashType === 'success' ? 'success' : 'error' ?>"><?= htmlspecialchars($flashMsg, ENT_QUOTES, 'UTF-8') ?></div>
 <?php endif; ?>
 
-<div class="card">
+<div id="csv-panel" style="display:none" class="card">
   <h2 style="font-size:16px;margin-bottom:16px;">CSVインポート</h2>
   <p style="font-size:13px;color:#64748b;margin-bottom:12px;">
     <a href="/ai-chat/admin/sample_faq.csv" download style="color:#2563eb;">サンプルCSVをダウンロード</a>
@@ -124,8 +132,9 @@ ob_start();
         <input type="checkbox" name="auto_keywords" id="auto_kw" value="1" style="width:auto;">
         <label for="auto_kw" style="margin-bottom:0;font-weight:400;">キーワード自動生成（Claude API）</label>
       </div>
-      <div style="padding-bottom:2px;">
+      <div style="padding-bottom:2px;display:flex;gap:8px;">
         <button class="btn btn-primary" type="submit">インポート</button>
+        <button type="button" class="btn btn-sm" onclick="togglePanel('csv-panel')" style="background:#94a3b8;color:#fff">キャンセル</button>
       </div>
     </div>
   </form>
@@ -146,7 +155,7 @@ ob_start();
   <?php endif; ?>
 </div>
 
-<div class="card">
+<div id="add-panel" style="display:none" class="card">
   <h2 style="font-size:16px;margin-bottom:16px;">FAQ追加</h2>
   <form method="post">
     <input type="hidden" name="action" value="add">
@@ -165,18 +174,74 @@ ob_start();
     <div class="form-group"><label>キーワード（空欄なら自動生成）</label><input type="text" name="keywords" placeholder="例: 営業時間,定休日,受付"></div>
     <div class="form-group"><label>優先度</label><input type="number" name="priority" value="0" min="0" style="width:100px"></div>
     <button class="btn btn-primary" type="submit">追加</button>
+    <button type="button" class="btn btn-sm" onclick="togglePanel('add-panel')" style="background:#94a3b8;color:#fff;margin-left:8px">キャンセル</button>
   </form>
 </div>
 
+<style>
+.faq-filter-bar{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;}
+.faq-filter-bar select,.faq-filter-bar input{font-size:13px;padding:6px 8px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;}
+.answer-tip{position:relative;cursor:help;}
+.answer-tip::after{
+  content:attr(data-tip);
+  display:none;
+  position:absolute;left:0;top:calc(100% + 4px);z-index:200;
+  background:#1e293b;color:#f1f5f9;
+  font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-word;
+  padding:10px 12px;border-radius:6px;width:320px;
+  box-shadow:0 4px 16px rgba(0,0,0,.35);
+  pointer-events:none;
+}
+.answer-tip:hover::after{display:block;}
+</style>
+
 <div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2 style="font-size:16px;margin:0;">FAQ一覧</h2>
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-sm" onclick="togglePanel('csv-panel')" style="background:#0ea5e9;color:#fff">CSVインポート</button>
+      <button class="btn btn-primary btn-sm" onclick="togglePanel('add-panel')">＋ FAQ追加</button>
+    </div>
+  </div>
+  <div class="faq-filter-bar">
+    <div>
+      <label style="font-size:12px;display:block;margin-bottom:4px;color:#64748b;">クライアント</label>
+      <select id="filter-client" onchange="onClientChange()">
+        <option value="">すべて</option>
+        <?php foreach ($clients as $c): ?>
+          <option value="<?= (int)$c['id'] ?>"><?= htmlspecialchars($c['name'], ENT_QUOTES, 'UTF-8') ?></option>
+        <?php endforeach; ?>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:12px;display:block;margin-bottom:4px;color:#64748b;">カテゴリ</label>
+      <select id="filter-category" onchange="filterFaqs()">
+        <option value="">すべて</option>
+      </select>
+    </div>
+    <div>
+      <label style="font-size:12px;display:block;margin-bottom:4px;color:#64748b;">状態</label>
+      <select id="filter-status" onchange="filterFaqs()">
+        <option value="">すべて</option>
+        <option value="1">公開中</option>
+        <option value="0">非公開</option>
+      </select>
+    </div>
+    <button class="btn btn-sm" style="background:#94a3b8;color:#fff;margin-bottom:1px" onclick="resetFilters()">リセット</button>
+    <span id="filter-count" style="font-size:12px;color:#64748b;align-self:center;margin-bottom:2px;"></span>
+  </div>
   <table>
-    <thead><tr><th>クライアント</th><th>カテゴリ</th><th>質問</th><th>状態</th><th>優先度</th><th></th></tr></thead>
-    <tbody>
+    <thead><tr><th>クライアント</th><th>カテゴリ</th><th>質問（回答はホバーで確認）</th><th>状態</th><th>優先度</th><th></th></tr></thead>
+    <tbody id="faq-tbody">
     <?php foreach ($faqs as $f): ?>
-      <tr>
+      <tr data-faq-id="<?= (int)$f['id'] ?>" data-client-id="<?= (int)$f['client_id'] ?>" data-category="<?= htmlspecialchars($f['category'] ?? '', ENT_QUOTES, 'UTF-8') ?>" data-status="<?= (int)$f['is_active'] ?>">
         <td><?= htmlspecialchars($f['client_name'], ENT_QUOTES, 'UTF-8') ?></td>
         <td><?= htmlspecialchars($f['category'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
-        <td><?= htmlspecialchars(mb_substr($f['question'], 0, 50), ENT_QUOTES, 'UTF-8') ?><?= mb_strlen($f['question']) > 50 ? '…' : '' ?></td>
+        <td>
+          <span class="answer-tip" data-tip="【回答】&#10;<?= htmlspecialchars($f['answer'], ENT_QUOTES, 'UTF-8') ?>">
+            <?= htmlspecialchars(mb_substr($f['question'], 0, 50), ENT_QUOTES, 'UTF-8') ?><?= mb_strlen($f['question']) > 50 ? '…' : '' ?>
+          </span>
+        </td>
         <td>
           <form method="post" style="display:inline">
             <input type="hidden" name="action" value="toggle">
@@ -196,7 +261,7 @@ ob_start();
           </form>
         </td>
       </tr>
-      <tr id="edit-row-<?= (int)$f['id'] ?>" style="display:none">
+      <tr id="edit-row-<?= (int)$f['id'] ?>" class="edit-row" style="display:none">
         <td colspan="6" style="padding:0">
           <div style="background:#f8fafc;border-top:2px solid #2563eb;padding:16px">
             <form method="post">
@@ -235,10 +300,74 @@ ob_start();
   </table>
 </div>
 <script>
+// クライアントID → カテゴリ一覧のマップ（PHPから生成）
+const clientCategoryMap = <?php
+  $map = [];
+  foreach ($faqs as $f) {
+    $cid = (int)$f['client_id'];
+    $cat = $f['category'] ?? '';
+    if ($cat !== '' && !in_array($cat, $map[$cid] ?? [])) {
+      $map[$cid][] = $cat;
+    }
+  }
+  foreach ($map as &$cats) sort($cats);
+  echo json_encode($map);
+?>;
+
+function onClientChange() {
+  const clientVal = document.getElementById('filter-client').value;
+  const catSel    = document.getElementById('filter-category');
+  const prev      = catSel.value;
+
+  catSel.innerHTML = '<option value="">すべて</option>';
+  const cats = clientVal ? (clientCategoryMap[clientVal] || []) : Object.values(clientCategoryMap).flat().filter((v,i,a)=>a.indexOf(v)===i).sort();
+  cats.forEach(cat => {
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = cat;
+    if (cat === prev) opt.selected = true;
+    catSel.appendChild(opt);
+  });
+
+  filterFaqs();
+}
+
+function filterFaqs() {
+  const clientVal   = document.getElementById('filter-client').value;
+  const categoryVal = document.getElementById('filter-category').value;
+  const statusVal   = document.getElementById('filter-status').value;
+  const rows = document.querySelectorAll('#faq-tbody tr[data-faq-id]');
+  let visible = 0;
+  rows.forEach(row => {
+    const matchClient   = !clientVal   || row.dataset.clientId === clientVal;
+    const matchCategory = !categoryVal || row.dataset.category === categoryVal;
+    const matchStatus   = statusVal === '' || row.dataset.status === statusVal;
+    const show = matchClient && matchCategory && matchStatus;
+    row.style.display = show ? '' : 'none';
+    const editRow = document.getElementById('edit-row-' + row.dataset.faqId);
+    if (editRow && !show) editRow.style.display = 'none';
+    if (show) visible++;
+  });
+  document.getElementById('filter-count').textContent = `${visible} 件表示中`;
+}
+
+function togglePanel(id) {
+  const p = document.getElementById(id);
+  p.style.display = p.style.display === 'none' ? '' : 'none';
+}
 function toggleEdit(id) {
   const row = document.getElementById('edit-row-' + id);
   row.style.display = row.style.display === 'none' ? '' : 'none';
 }
+
+function resetFilters() {
+  document.getElementById('filter-client').value   = '';
+  document.getElementById('filter-category').value = '';
+  document.getElementById('filter-status').value   = '';
+  onClientChange();
+}
+
+onClientChange(); // 初期表示時に全カテゴリをセットしてフィルター適用
 </script>
 <?php
 adminLayout('FAQ管理（管理者）', ob_get_clean(), 'admin');

@@ -57,7 +57,7 @@ ob_start();
   <div class="flash flash-<?= $flashType === 'success' ? 'success' : 'error' ?>"><?= htmlspecialchars($flashMsg, ENT_QUOTES, 'UTF-8') ?></div>
 <?php endif; ?>
 
-<div class="card">
+<div id="add-panel" style="display:none" class="card">
   <h2 style="font-size:16px;margin-bottom:16px;">新規ユーザー追加</h2>
   <form method="post">
     <input type="hidden" name="action" value="add">
@@ -80,10 +80,15 @@ ob_start();
       </select>
     </div>
     <button class="btn btn-primary" type="submit">追加</button>
+    <button type="button" class="btn btn-sm" onclick="togglePanel()" style="background:#94a3b8;color:#fff;margin-left:8px">キャンセル</button>
   </form>
 </div>
 
 <div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2 style="font-size:16px;margin:0;">ユーザー一覧</h2>
+    <button class="btn btn-primary btn-sm" onclick="togglePanel()">＋ 新規追加</button>
+  </div>
   <table>
     <thead><tr><th>メールアドレス</th><th>ロール</th><th>所属クライアント</th><th>登録日</th><th></th></tr></thead>
     <tbody>
@@ -110,6 +115,10 @@ ob_start();
   </table>
 </div>
 <script>
+function togglePanel() {
+  const p = document.getElementById('add-panel');
+  p.style.display = p.style.display === 'none' ? '' : 'none';
+}
 function toggleClientField() {
   document.getElementById('client-field').style.display =
     document.getElementById('role-select').value === 'editor' ? '' : 'none';

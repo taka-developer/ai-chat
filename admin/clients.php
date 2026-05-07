@@ -56,7 +56,7 @@ ob_start();
   <div class="flash flash-<?= $flashType === 'success' ? 'success' : 'error' ?>"><?= htmlspecialchars($flashMsg, ENT_QUOTES, 'UTF-8') ?></div>
 <?php endif; ?>
 
-<div class="card">
+<div id="add-panel" style="display:none" class="card">
   <h2 style="font-size:16px;margin-bottom:16px;">新規クライアント追加</h2>
   <form method="post">
     <input type="hidden" name="action" value="add">
@@ -64,19 +64,33 @@ ob_start();
     <div class="form-group"><label>システムプロンプト</label><textarea name="system_prompt" rows="3"></textarea></div>
     <div class="form-group"><label>お問い合わせURL</label><input type="url" name="contact_url"></div>
     <button class="btn btn-primary" type="submit">追加</button>
+    <button type="button" class="btn btn-sm" onclick="togglePanel()" style="background:#94a3b8;color:#fff;margin-left:8px">キャンセル</button>
   </form>
 </div>
 
 <div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2 style="font-size:16px;margin:0;">クライアント一覧</h2>
+    <button class="btn btn-primary btn-sm" onclick="togglePanel()">＋ 新規追加</button>
+  </div>
   <table>
     <thead><tr><th>会社名</th><th>FAQ数</th><th>widget_key</th><th>埋め込みタグ</th><th>登録日</th><th></th></tr></thead>
     <tbody>
     <?php foreach ($clients as $c): ?>
+      <?php
+        $key     = htmlspecialchars($c['widget_key'], ENT_QUOTES, 'UTF-8');
+        $embedTag = htmlspecialchars('<script src="https://chat.stekwired.jp/widget.js" data-key="' . $c['widget_key'] . '"></script>', ENT_QUOTES, 'UTF-8');
+      ?>
       <tr>
         <td><?= htmlspecialchars($c['name'], ENT_QUOTES, 'UTF-8') ?></td>
         <td><?= (int)$c['faq_count'] ?></td>
-        <td><code><?= htmlspecialchars($c['widget_key'], ENT_QUOTES, 'UTF-8') ?></code></td>
-        <td><code>&lt;script src="https://chat.stekwired.jp/widget.js" data-key="<?= htmlspecialchars($c['widget_key'], ENT_QUOTES, 'UTF-8') ?>"&gt;&lt;/script&gt;</code></td>
+        <td style="white-space:nowrap">
+          <code style="font-size:11px"><?= substr($key, 0, 8) ?>…</code>
+          <button class="btn btn-sm" style="font-size:11px;padding:2px 8px;margin-left:4px" onclick="copyText('<?= $key ?>', this)">コピー</button>
+        </td>
+        <td style="white-space:nowrap">
+          <button class="btn btn-sm" style="font-size:11px;padding:2px 8px" onclick="copyText('<?= $embedTag ?>', this)">タグをコピー</button>
+        </td>
         <td><?= htmlspecialchars(substr($c['created_at'], 0, 10), ENT_QUOTES, 'UTF-8') ?></td>
         <td style="white-space:nowrap">
           <button class="btn btn-sm" style="background:#0ea5e9;color:#fff" onclick="toggleEdit(<?= (int)$c['id'] ?>)">編集</button>
@@ -108,9 +122,20 @@ ob_start();
   </table>
 </div>
 <script>
+function togglePanel() {
+  const p = document.getElementById('add-panel');
+  p.style.display = p.style.display === 'none' ? '' : 'none';
+}
 function toggleEdit(id) {
   const row = document.getElementById('edit-row-' + id);
   row.style.display = row.style.display === 'none' ? '' : 'none';
+}
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓ コピー済み';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
 }
 </script>
 <?php

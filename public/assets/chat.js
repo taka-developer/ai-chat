@@ -197,14 +197,11 @@
         console.log('[Chat] フィードバック:', positive ? '👍' : '👎');
         el.innerHTML = positive
           ? '<span>ありがとうございました！</span>'
-          : '<span>ご不便をおかけしました。</span><div class="feedback-contact"><a href="#" id="contact-link">担当者へ相談する →</a></div>';
+          : '<span>ご不便をおかけしました。</span><div class="feedback-contact"><a href="#" id="contact-link" target="_blank" rel="noopener noreferrer">担当者へ相談する →</a></div>';
 
         const link = el.querySelector('#contact-link');
-        if (link) {
-          link.addEventListener('click', e => {
-            e.preventDefault();
-            window.parent.postMessage('sw:contact', '*');
-          });
+        if (link && window.CONTACT_URL) {
+          link.href = window.CONTACT_URL;
         }
       });
     });
